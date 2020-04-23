@@ -18,28 +18,6 @@ node("${BUILD_NODE}"){
         checkout(scm)
     }
     
-    stage("Load Variables")
-    {
-        withCredentials([string(credentialsId: 'o2-artifact-project', variable: 'o2ArtifactProject')]) {
-            step ([$class: "CopyArtifact",
-                projectName: o2ArtifactProject,
-                filter: "common-variables.groovy",
-                flatten: true])
-        }
-
-        load "common-variables.groovy"
-    }
-    
-    stage ("Assemble")
-    {
-        sh """
-        ./gradlew assemble \
-            -PossimMavenProxy=${OSSIM_MAVEN_PROXY}
-        """
-        archiveArtifacts "plugins/*/build/libs/*.jar"
-        archiveArtifacts "apps/*/build/libs/*.jar"
-    }
-    
     stage ("Publish Docker App")
     {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
@@ -50,7 +28,7 @@ node("${BUILD_NODE}"){
             // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
             ./gradlew pushDockerImage \
-                -PossimMavenProxy=${OSSIM_MAVEN_PROXY}
+                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
             """
         }
     }
@@ -66,7 +44,7 @@ node("${BUILD_NODE}"){
                 // Run all tasks on the app. This includes pushing to OpenShift and S3.
                 sh """
                     ./gradlew openshiftTagImage \
-                        -PossimMavenProxy=${OSSIM_MAVEN_PROXY}
+                        -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
                 """
             }
         }
