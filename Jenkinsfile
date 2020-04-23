@@ -30,6 +30,16 @@ node("${BUILD_NODE}"){
         load "common-variables.groovy"
     }
     
+    stage ("Assemble")
+    {
+        sh """
+        ./gradlew assemble \
+            -PossimMavenProxy=${OSSIM_MAVEN_PROXY}
+        """
+        archiveArtifacts "plugins/*/build/libs/*.jar"
+        archiveArtifacts "apps/*/build/libs/*.jar"
+    }
+    
     stage ("Publish Docker App")
     {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
