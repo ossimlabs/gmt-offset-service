@@ -17,7 +17,36 @@ node("${BUILD_NODE}"){
     {
         checkout(scm)
     }
-    
+
+    stage("Load Variables")
+    {
+        withCredentials([string(credentialsId: 'o2-artifact-project', variable: 'o2ArtifactProject')]) {
+            step ([$class: "CopyArtifact",
+                projectName: o2ArtifactProject,
+                filter: "common-variables.groovy",
+                flatten: true])
+        }
+
+        load "common-variables.groovy"
+    }
+
+    /*
+    stage ("Publish Nexus")
+    {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                        credentialsId: 'nexusCredentials',
+                        usernameVariable: 'MAVEN_REPO_USERNAME',
+                        passwordVariable: 'MAVEN_REPO_PASSWORD']])
+        {
+            sh """
+            ./gradlew publish \
+                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
+            """
+        }
+    }
+    */
+
+
     stage ("Publish Docker App")
     {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
@@ -32,7 +61,7 @@ node("${BUILD_NODE}"){
             """
         }
     }
-
+    
     try {
         stage ("OpenShift Tag Image")
         {
