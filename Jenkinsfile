@@ -18,16 +18,16 @@ node("${BUILD_NODE}"){
         checkout(scm)
     }
     
-    stage ("Build Docker App")
+    stage ("Publish Nexus")
     {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                        credentialsId: 'dockerCredentials',
-                        usernameVariable: 'DOCKER_REGISTRY_USERNAME',
-                        passwordVariable: 'DOCKER_REGISTRY_PASSWORD']])
+                        credentialsId: 'nexusCredentials',
+                        usernameVariable: 'MAVEN_REPO_USERNAME',
+                        passwordVariable: 'MAVEN_REPO_PASSWORD']])
         {
-            // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
-            docker build ${DOCKER_REGISTRY_PUBLIC_UPLOAD_URL}/omar-timeserver
+            ./gradlew publish \
+                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
             """
         }
     }
@@ -41,7 +41,8 @@ node("${BUILD_NODE}"){
         {
             // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
-            docker push ${DOCKER_REGISTRY_PUBLIC_UPLOAD_URL}/omar-timeserver
+            ./gradlew pushDockerImage \
+                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
             """
         }
     }
