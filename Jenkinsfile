@@ -17,35 +17,20 @@ node("${BUILD_NODE}"){
     {
         checkout(scm)
     }
-
-    stage("Load Variables")
-    {
-        withCredentials([string(credentialsId: 'o2-artifact-project', variable: 'o2ArtifactProject')]) {
-            step ([$class: "CopyArtifact",
-                projectName: o2ArtifactProject,
-                filter: "common-variables.groovy",
-                flatten: true])
-        }
-
-        load "common-variables.groovy"
-    }
-
-    /*
-    stage ("Publish Nexus")
+    
+    stage ("Build Docker App")
     {
         withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                        credentialsId: 'nexusCredentials',
-                        usernameVariable: 'MAVEN_REPO_USERNAME',
-                        passwordVariable: 'MAVEN_REPO_PASSWORD']])
+                        credentialsId: 'dockerCredentials',
+                        usernameVariable: 'DOCKER_REGISTRY_USERNAME',
+                        passwordVariable: 'DOCKER_REGISTRY_PASSWORD']])
         {
+            // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
-            ./gradlew publish \
-                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
+            docker build ${DOCKER_REGISTRY_PUBLIC_UPLOAD_URL}/omar-timeserver
             """
         }
     }
-    */
-
 
     stage ("Publish Docker App")
     {
@@ -56,8 +41,7 @@ node("${BUILD_NODE}"){
         {
             // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
-            ./gradlew pushDockerImage \
-                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
+            docker push ${DOCKER_REGISTRY_PUBLIC_UPLOAD_URL}/omar-timeserver
             """
         }
     }
