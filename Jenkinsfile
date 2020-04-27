@@ -44,6 +44,10 @@ node("${BUILD_NODE}"){
             {
                 // Run all tasks on the app. This includes pushing to OpenShift and S3.
                 sh """
+                oc login -u $OPENSHIFT_USER -p $OPENSHIFT_PASSWORD $OPENSHIFT_URL
+                docker login -p `oc whoami -t` -e unused -u unused $DOCKER_REGISTRY_URL
+                docker tag nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev $OPENSHIFT_URL/gmt-offset-service:dev
+                docker push nexus-docker-public-hosted.ossim.io/omar-dev/gmt-offset-service:dev
                 """
             }
         }
