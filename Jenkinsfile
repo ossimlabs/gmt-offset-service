@@ -17,20 +17,6 @@ node("${BUILD_NODE}"){
     {
         checkout(scm)
     }
-    
-    stage ("Publish Nexus")
-    {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                        credentialsId: 'nexusCredentials',
-                        usernameVariable: 'MAVEN_REPO_USERNAME',
-                        passwordVariable: 'MAVEN_REPO_PASSWORD']])
-        {
-            sh """
-            ./gradlew publish \
-                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
-            """
-        }
-    }
 
     stage ("Publish Docker App")
     {
@@ -41,8 +27,9 @@ node("${BUILD_NODE}"){
         {
             // Run all tasks on the app. This includes pushing to OpenShift and S3.
             sh """
-            ./gradlew pushDockerImage \
-                -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
+            docker build -t nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev .
+            docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD nexus-docker-public-hosted.ossim.io
+            docker push nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev
             """
         }
     }
@@ -57,8 +44,6 @@ node("${BUILD_NODE}"){
             {
                 // Run all tasks on the app. This includes pushing to OpenShift and S3.
                 sh """
-                    ./gradlew openshiftTagImage \
-                        -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
                 """
             }
         }
