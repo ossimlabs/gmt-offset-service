@@ -10,11 +10,14 @@ def gmtoffset(request):
     try:
         latitude  = request.GET["lat"]
         longitude = request.GET["lon"]
+
         point = (float(longitude), float(latitude))
-        shp = shapefile.Reader('ne_10m_time_zones/ne_10m_time_zones.shp') #open the shapefile
+
+        shp = shapefile.Reader('../ne_10m_time_zones/ne_10m_time_zones.shp') #open the shapefile
         all_shapes = shp.shapes() # get all the polygons
         for i, boundary in enumerate(all_shapes):
             if Point(point).within(shape(boundary)): # make a point and see if it's in the polygon
+               print(  shp.record(i)[7])
                return HttpResponse(shp.record(i)[7])
     except Exception as e:
         print(e)
