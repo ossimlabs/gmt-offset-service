@@ -50,28 +50,7 @@ node(POD_LABEL){
                 """
             }
         }
-    }
-    
-    try {
-        stage ("OpenShift Tag Image")
-        {
-            container('docker'){
-                withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                                credentialsId: 'openshiftCredentials',
-                                usernameVariable: 'OPENSHIFT_USERNAME',
-                                passwordVariable: 'OPENSHIFT_PASSWORD']])
-                {
-                    // Run all tasks on the app. This includes pushing to OpenShift and S3.
-                    sh """
-                    oc login -u $OPENSHIFT_USERNAME -p $OPENSHIFT_PASSWORD https://openshift.ossim.io:8443
-                    oc tag --source=docker nexus-docker-private-group.ossim.io:dev omar-dev/gmt-offset-service:dev --scheduled=true
-                    """
-                }
-            }
-        }
-    } catch (e) {
-        echo e.toString()
-   } 
+    } 
 
     stage("Clean Workspace")
     {
