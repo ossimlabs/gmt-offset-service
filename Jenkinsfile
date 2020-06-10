@@ -10,8 +10,25 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '20')),
     disableConcurrentBuilds()
 ])
-
-node("${BUILD_NODE}"){
+podTemplate(
+  containers: [
+    containerTemplate(
+      name: 'docker',
+      image: 'docker:19.03.8',
+      ttyEnabled: true,
+      command: 'cat',
+      privileged: true
+    )
+  ],
+  volumes: [
+    hostPathVolume(
+      hostPath: '/var/run/docker.sock',
+      mountPath: '/var/run/docker.sock'
+    )
+  ]
+)
+{
+node(POD_LABEL){
 
     stage("Checkout branch $BRANCH_NAME")
     {
@@ -20,42 +37,26 @@ node("${BUILD_NODE}"){
 
     stage ("Publish Docker App")
     {
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                        credentialsId: 'dockerCredentials',
-                        usernameVariable: 'DOCKER_REGISTRY_USERNAME',
-                        passwordVariable: 'DOCKER_REGISTRY_PASSWORD']])
-        {
-            // Run all tasks on the app. This includes pushing to OpenShift and S3.
-            sh """
-            docker build -t nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev .
-            docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD nexus-docker-public-hosted.ossim.io
-            docker push nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev
-            """
-        }
-    }
-    
-    try {
-        stage ("OpenShift Tag Image")
-        {
+        container('docker'){
             withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                            credentialsId: 'openshiftCredentials',
-                            usernameVariable: 'OPENSHIFT_USERNAME',
-                            passwordVariable: 'OPENSHIFT_PASSWORD']])
+                            credentialsId: 'dockerCredentials',
+                            usernameVariable: 'DOCKER_REGISTRY_USERNAME',
+                            passwordVariable: 'DOCKER_REGISTRY_PASSWORD']])
             {
                 // Run all tasks on the app. This includes pushing to OpenShift and S3.
                 sh """
-                oc login -u $OPENSHIFT_USERNAME -p $OPENSHIFT_PASSWORD https://openshift.ossim.io:8443
-                oc tag --source=docker nexus-docker-private-group.ossim.io:dev omar-dev/gmt-offset-service:dev --scheduled=true
+                docker build -t nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev .
+                docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD nexus-docker-public-hosted.ossim.io
+                docker push nexus-docker-public-hosted.ossim.io/gmt-offset-service:dev
                 """
             }
         }
-    } catch (e) {
-        echo e.toString()
-   } 
+    } 
 
     stage("Clean Workspace")
     {
         if ("${CLEAN_WORKSPACE}" == "true")
             step([$class: 'WsCleanup'])
     }
+}
 }
