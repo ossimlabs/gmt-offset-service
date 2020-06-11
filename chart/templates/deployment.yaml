@@ -57,7 +57,10 @@ spec:
           name: ossim-data
         {{- include "gmt-offset-service.volumeMounts" . | indent 8 }}
       dnsPolicy: ClusterFirst
-      {{- include "gmt-offset-service.imagePullSecret" . | nindent 6 }}
+      {{- if .Values.global.useImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.appName }}-pull-secret
+      {{- end }}
       restartPolicy: Always
       securityContext: {}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
