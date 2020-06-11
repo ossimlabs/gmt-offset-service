@@ -17,12 +17,12 @@ spec:
       {{- if (pluck "useSpringConfigServer" .Values .Values.global | first) }}
       - name: wait-for-config-server
         image: busybox:1.28
-        command: ['sh', '-c', "until wget omar-config-server:8888/omar-config-server/omar-time.yml; do echo waiting for config server; sleep 2; done"]
+        command: ['sh', '-c', "until wget omar-config-server:8888/omar-config-server/gmt-offset-service.yml; do echo waiting for config server; sleep 2; done"]
       {{- end }}
       containers:
       - name:  {{ .Values.appName }}
         env:
-        {{- include "omar-time.envVars" . | nindent 8 }}
+        {{- include "gmt-offset-service.envVars" . | nindent 8 }}
         image: {{ .Values.global.dockerRepository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         livenessProbe:
@@ -39,10 +39,8 @@ spec:
           periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           successThreshold: {{ .Values.readinessProbe.successThreshold }}
           timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-          httpGet:
-            path: {{ .Values.readinessProbe.path }}
+          tcpSocket:
             port: {{ .Values.internalPort }}
-            scheme: HTTP
         ports:
         - containerPort: {{ .Values.internalPort }}
           protocol: TCP
@@ -57,9 +55,9 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: ossim-data
-        {{- include "omar-time.volumeMounts" . | indent 8 }}
+        {{- include "gmt-offset-service.volumeMounts" . | indent 8 }}
       dnsPolicy: ClusterFirst
-      {{- include "omar-time.imagePullSecret" . | nindent 6 }}
+      {{- include "gmt-offset-service.imagePullSecret" . | nindent 6 }}
       restartPolicy: Always
       securityContext: {}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
@@ -67,4 +65,4 @@ spec:
       - name: ossim-data
         persistentVolumeClaim:
           claimName: {{ .Values.appName }}-ossim-data-pvc
-      {{- include "omar-time.volumes" . | indent 6 }}
+      {{- include "gmt-offset-service.volumes" . | indent 6 }}
