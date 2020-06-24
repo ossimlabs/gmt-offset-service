@@ -22,8 +22,8 @@ spec:
       containers:
       - name:  {{ .Values.appName }}
         env:
-        {{- include "gmt-offset-service.envVars" . | nindent 8 }}
-        image: {{ .Values.global.dockerRepository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        {{- include "gmt-offset-service.envVars" . | indent 8 }}
+        image: "{{ .Values.global.dockerRepository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         livenessProbe:
           failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -39,8 +39,10 @@ spec:
           periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           successThreshold: {{ .Values.readinessProbe.successThreshold }}
           timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-          tcpSocket:
+          httpGet:
+            path: {{ .Values.readinessProbe.path }}
             port: {{ .Values.internalPort }}
+            scheme: HTTP
         ports:
         - containerPort: {{ .Values.internalPort }}
           protocol: TCP
@@ -53,8 +55,6 @@ spec:
             memory: {{ .Values.resources.requests.memory }}
         terminationMessagePath: /dev/termination-log
         volumeMounts:
-        - mountPath: /data
-          name: ossim-data
         {{- include "gmt-offset-service.volumeMounts" . | indent 8 }}
       dnsPolicy: ClusterFirst
       {{- if .Values.global.useImagePullSecret }}
@@ -65,7 +65,4 @@ spec:
       securityContext: {}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
-      - name: ossim-data
-        persistentVolumeClaim:
-          claimName: {{ .Values.appName }}-ossim-data-pvc
       {{- include "gmt-offset-service.volumes" . | indent 6 }}
