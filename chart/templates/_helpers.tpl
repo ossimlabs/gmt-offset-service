@@ -17,11 +17,11 @@
 {{/* Templates for the volumeMounts section */}}
 
 {{- define "gmt-offset-service.volumeMounts.configmaps" -}}
-{{- range $configmap := .Values.configmaps}}
-- name: {{ $configmap.internalName | quote }}
-  mountPath: {{ $configmap.mountPath | quote }}
-  {{- if $configmap.subPath }}
-  subPath: {{ $configmap.subPath | quote }}
+{{- range $configmapName, $configmapDict := .Values.configmaps}}
+- name: {{ $configmapName | quote }}
+  mountPath: {{ $configmapDict.mountPath | quote }}
+  {{- if $configmapDict.subPath }}
+  subPath: {{ $configmapDict.subPath | quote }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -40,6 +40,12 @@
 {{- define "gmt-offset-service.volumeMounts" -}}
 {{- include "gmt-offset-service.volumeMounts.configmaps" . -}}
 {{- include "gmt-offset-service.volumeMounts.pvcs" . -}}
+{{- if .Values.global.extraVolumeMounts }}
+{{ toYaml .Values.global.extraVolumeMounts }}
+{{- end }}
+{{- if .Values.extraVolumeMounts }}
+{{ toYaml .Values.extraVolumeMounts }}
+{{- end }}
 {{- end -}}
 
 
@@ -49,10 +55,10 @@
 {{/* Templates for the volumes section */}}
 
 {{- define "gmt-offset-service.volumes.configmaps" -}}
-{{- range $configmap := .Values.configmaps}}
-- name: {{ $configmap.internalName | quote }}
+{{- range $configmapName, $configmapDict := .Values.configmaps}}
+- name: {{ $configmapName | quote }}
   configMap:
-    name: {{ $configmap.name | quote }}
+    name: {{ $configmapName | quote }}
 {{- end -}}
 {{- end -}}
 
@@ -68,4 +74,10 @@
 {{- define "gmt-offset-service.volumes" -}}
 {{- include "gmt-offset-service.volumes.configmaps" . -}}
 {{- include "gmt-offset-service.volumes.pvcs" . -}}
+{{- if .Values.global.extraVolumes }}
+{{ toYaml .Values.global.extraVolumes }}
+{{- end }}
+{{- if .Values.extraVolumes }}
+{{ toYaml .Values.extraVolumes }}
+{{- end }}
 {{- end -}}
