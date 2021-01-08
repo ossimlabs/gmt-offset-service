@@ -1,5 +1,6 @@
 properties([
     parameters ([
+        string(name: 'BUILD_NODE', defaultValue: 'POD_LABEL', description: 'The build node to run on'),
         booleanParam(name: 'CLEAN_WORKSPACE', defaultValue: true, description: 'Clean the workspace at the end of the run'),
         string(name: 'DOCKER_REGISTRY_DOWNLOAD_URL', defaultValue: 'nexus-docker-private-group.ossim.io', description: 'Repository of docker images')
     ]),
@@ -14,7 +15,7 @@ podTemplate(
   containers: [
     containerTemplate(
       name: 'docker',
-      image: 'docker:19.03.8',
+      image: 'docker:19.03.11',
       ttyEnabled: true,
       command: 'cat',
       privileged: true
@@ -30,6 +31,13 @@ podTemplate(
       name: 'curl',
       command: 'cat',
       ttyEnabled: true
+    ),
+      containerTemplate(
+      image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/kubectl-aws-helm:latest",
+      name: 'kubectl-aws-helm',
+      command: 'cat',
+      ttyEnabled: true,
+      alwaysPullImage: true
     )
   ],
   volumes: [
@@ -44,8 +52,32 @@ node(POD_LABEL){
 
     stage("Checkout branch $BRANCH_NAME")
     {
-        checkout(scm)
-    }
+        scmVars = checkout(scm)
+        GIT_BRANCH_NAME = scmVars.GIT_BRANCH
+        BRANCH_NAME = """${sh(returnStdout: true, script: "echo ${GIT_BRANCH_NAME} | awk -F'/' '{print \$2}'").trim()}"""
+        
+        sh """
+        touch buildVersion.txt
+        grep buildVersion gradle.properties | cut -d "=" -f2 > "buildVersion.txt"
+           """
+        
+        preVERSION = readFile "buildVersion.txt"
+        VERSION = preVERSION.substring(0, preVERSION.indexOf('\n'))
+
+        GIT_TAG_NAME = "omar-wfs" + "-" + VERSION
+        ARTIFACT_NAME = "ArtifactName"
+
+        script 
+        {
+          if (BRANCH_NAME != 'master') 
+          {
+            buildName "${VERSION} - ${BRANCH_NAME}-SNAPSHOT"
+          } else 
+          {
+            buildName "${VERSION} - ${BRANCH_NAME}"
+          }
+        }
+      }
 
     stage("Load Variables")
     {
