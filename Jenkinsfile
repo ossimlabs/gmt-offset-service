@@ -20,6 +20,12 @@ podTemplate(
       command: 'cat',
       privileged: true
     ),
+      containerTemplate(
+      image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/omar-builder:1.0.0",
+      name: 'builder',
+      command: 'cat',
+      ttyEnabled: true
+    ),
     containerTemplate(
       image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/alpine/helm:3.2.3",
       name: 'helm',
@@ -120,11 +126,31 @@ node(POD_LABEL){
     }
 
     stage('Upload chart'){
-      container('curl') {
+      container('builder') {
         withCredentials([usernameColonPassword(credentialsId: 'helmCredentials', variable: 'HELM_CREDENTIALS')]) {
           sh "curl -u ${HELM_CREDENTIALS} ${HELM_UPLOAD_URL} --upload-file packaged-chart/*.tgz -v"
         }
       }
+    }
+    
+    stage('New Deploy'){
+        container('kubectl-aws-helm') {
+            withAWS(
+            credentials: 'Jenkins-AWS-IAM',
+            region: 'us-east-1'){
+                if (BRANCH_NAME == 'master'){
+                    //insert future instructions here
+                }
+                else if (BRANCH_NAME == 'dev') {
+                    sh "aws eks --region us-east-1 update-kubeconfig --name gsp-dev-v2 --alias dev"
+                    sh "kubectl config set-context dev --namespace=omar-dev"
+                    sh "kubectl rollout restart deployment/omar-wfs"   
+                }
+                else {
+                    sh "echo Not deploying ${BRANCH_NAME} branch"
+                }
+            }
+        }
     }
 
     stage("Clean Workspace")
