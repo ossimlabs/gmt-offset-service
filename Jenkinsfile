@@ -56,10 +56,10 @@ node(POD_LABEL){
         GIT_BRANCH_NAME = scmVars.GIT_BRANCH
         BRANCH_NAME = """${sh(returnStdout: true, script: "echo ${GIT_BRANCH_NAME} | awk -F'/' '{print \$2}'").trim()}"""
         
-        sh """
-        touch buildVersion.txt
-        grep buildVersion gradle.properties | cut -d "=" -f2 > "buildVersion.txt"
-           """
+//        sh """
+//        touch buildVersion.txt
+//        grep buildVersion gradle.properties | cut -d "=" -f2 > "buildVersion.txt"
+//           """
         
         preVERSION = readFile "buildVersion.txt"
         VERSION = preVERSION.substring(0, preVERSION.indexOf('\n'))
