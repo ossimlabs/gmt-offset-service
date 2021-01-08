@@ -67,7 +67,7 @@ node(POD_LABEL){
 //        grep buildVersion gradle.properties | cut -d "=" -f2 > "buildVersion.txt"
 //           """
         
-        preVERSION = readFile "buildVersion.txt"
+        preVERSION = readFile "BuildVersion.txt"
         VERSION = preVERSION.substring(0, preVERSION.indexOf('\n'))
 
         GIT_TAG_NAME = "omar-wfs" + "-" + VERSION
