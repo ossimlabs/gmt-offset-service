@@ -82,6 +82,7 @@ readinessProbe:
   periodSeconds: 25
   successThreshold: 1
   timeoutSeconds: 3
+  path: /gmt-offset-service/actuator/health
 
 terminationGracePeriodSeconds: 30
 
