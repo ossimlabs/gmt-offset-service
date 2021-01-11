@@ -66,7 +66,7 @@ image:
   pullPolicy: Always
 
 ingressPath: /gmt-offset-service
-internalPort: 8000
+internalPort: 8080
 externalPort: 8080
 
 livenessProbe:
