@@ -66,7 +66,7 @@ image:
   pullPolicy: Always
 
 ingressPath: /gmt-offset-service
-internalPort: 8000
+internalPort: 8080
 externalPort: 8080
 
 livenessProbe:
@@ -78,10 +78,11 @@ livenessProbe:
 
 readinessProbe:
   failureThreshold: 15
-  initialDelaySeconds: 30
+  initialDelaySeconds: 60
   periodSeconds: 25
   successThreshold: 1
   timeoutSeconds: 3
+  path: /gmt-offset-service/actuator/health
 
 terminationGracePeriodSeconds: 30
 
